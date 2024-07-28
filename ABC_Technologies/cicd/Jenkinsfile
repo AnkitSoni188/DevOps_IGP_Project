@@ -1,0 +1,96 @@
+pipeline {
+    agent any
+    tools {
+        maven 'maven_3.9.8'  // Replace with your Maven installation name
+    }
+    environment {
+        ANSIBLE_SERVER = '172.31.94.204'
+        ANSIBLE_USER = 'ansadmin'
+        ARTIFACT_PATH = '/ABC_Technologies/target/ABCtechnologies-1.0.war'  // Path to the build artifact
+        DEPLOY_PATH = '/opt/docker'  // Path where artifacts and playbooks are located on the Ansible server
+        MAVEN_HOME = '/opt/maven'  // Replace with your actual Maven home
+        PROJECT_DIR = 'ABC_Technologies'  // Path to the folder containing the pom.xml
+        SSH_SERVER = '172.31.94.204'
+        SSH_PASS = 'Jai@2143' // Replace with your SSH password
+        SSH_CREDENTIALS_ID = 'ansible-server-ssh-key'
+        SSH_PASS_CREDENTIALS_ID = 'ANSIBLE_SSH_PASSWORD' // Jenkins credentials ID
+    }
+    stages {
+        stage('Fetch Code') {
+            steps {
+                git 'https://github.com/AnkitSoni188/DevOps_IGP_Project.git'
+            }
+        }
+        stage('Test') {
+            steps {
+                echo 'Running tests...'
+                 dir("${PROJECT_DIR}") {
+                    sh "${MAVEN_HOME}/bin/mvn test"
+                }
+               
+            }
+        }
+        stage('Build') {
+            steps {
+                echo 'Building the application...'
+                dir("${PROJECT_DIR}") {
+                    sh "${MAVEN_HOME}/bin/mvn clean package"
+                }
+            }
+        }
+        stage('Copy Artifacts') {
+            steps {
+                script {
+                    echo 'Finding and copying artifacts to Ansible server...'
+
+                    // Add SSH server key to known hosts to avoid interactive prompt
+                    sh "ssh-keyscan -H ${ANSIBLE_SERVER} >> ~/.ssh/known_hosts"
+                    // Define artifact path based on workspace and build output
+                    def artifactPath = "${env.WORKSPACE}${ARTIFACT_PATH}"
+                    sh """
+                        sshpass -p  '${SSH_PASS}' scp -o StrictHostKeyChecking=no ${artifactPath} ${ANSIBLE_USER}@${ANSIBLE_SERVER}:${DEPLOY_PATH}/
+                    """
+                }
+            }
+        }
+       
+        stage('Test SSH Key') {
+            steps {
+                script{
+                     echo 'Prrint SSH...'
+                    withCredentials([sshUserPrivateKey(credentialsId: "${SSH_CREDENTIALS_ID}", keyFileVariable: 'SSH_KEY')]) {
+                    sh 'ssh -i ${SSH_KEY} -o StrictHostKeyChecking=no ansadmin@172.31.94.204 "echo SSH key works"'
+                }
+                }
+
+            }
+        }
+    
+        stage('Run Ansible Playbooks') {
+            steps {
+                script {
+                    echo 'Running Ansible playbooks on the remote server...'
+
+                    withCredentials([sshUserPrivateKey(credentialsId: "${SSH_CREDENTIALS_ID}", keyFileVariable: 'SSH_KEY')]) {
+                    sh '''
+                    echo "Listing /opt/docker/";
+                    ssh -o StrictHostKeyChecking=no -i $SSH_KEY $ANSIBLE_USER@$ANSIBLE_SERVER "ls -l /opt/docker/"
+                    echo "Running create docker image playbook";
+                    ssh -o StrictHostKeyChecking=no -i $SSH_KEY $ANSIBLE_USER@$ANSIBLE_SERVER "ansible-playbook /opt/docker/igp_ansible.yml"
+                    echo "Sleeping for 10 seconds...";
+                    sleep 10
+                    echo "Running deploy container playbook...";
+                    ssh -o StrictHostKeyChecking=no -i $SSH_KEY $ANSIBLE_USER@$ANSIBLE_SERVER "ansible-playbook /opt/docker/igp_ansible_deploy.yml"
+                    '''
+                    }
+                }
+            }
+        }
+    }
+    post {
+        always {
+            echo 'Cleaning up...'
+            // Clean up actions, if any
+        }
+    }
+}
