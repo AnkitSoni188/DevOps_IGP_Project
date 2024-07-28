@@ -90,10 +90,10 @@ pipeline {
             }
         }
     }
-    // post {
-    //     // always {
-    //     //     echo 'Cleaning up...'
-    //     //     // Clean up actions, if any
-    //     // }
-    // }
+     post {
+          always {
+              echo 'Cleaning up...'
+              // Clean up actions, if any
+          }
+     }
 }
