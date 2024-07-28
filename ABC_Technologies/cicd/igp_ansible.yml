@@ -1,0 +1,18 @@
+---
+- hosts: ansible
+
+  tasks:
+  - name: start docker service
+    command: sudo service docker start
+    ignore_errors: yes
+
+  - name: create docker image
+    command: docker build -t igpproject:latest .
+    args:
+      chdir: /opt/docker
+
+  - name: create tag to push image to docker hub
+    command: docker tag igpproject:latest ankitsoni301188/igpproject:latest
+
+  - name:  push docker image
+    command: docker push ankitsoni301188/igpproject:latest

@@ -1,0 +1,28 @@
+---
+- hosts: dockerhost
+  become: true
+
+  tasks:
+  - name: start docker service
+    command: sudo service docker start
+    ignore_errors: yes
+
+  - name: grant permission to docker.sock to create container
+    file:
+      path: /var/run/docker.sock
+      mode: '777'
+
+  - name: stop existing container
+    command: docker stop igpproject-server
+    ignore_errors: yes
+
+  - name: remove the container
+    command: docker rm igpproject-server
+    ignore_errors: yes
+
+  - name: remove image
+    command: docker rmi  ankitsoni301188/igpproject:latest
+    ignore_errors: yes
+
+  - name: create container
+    command: docker run -d --name igpproject-server -p 8089:8080 ankitsoni301188/igpproject:latest

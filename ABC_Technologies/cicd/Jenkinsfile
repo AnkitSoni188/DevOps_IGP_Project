@@ -46,8 +46,22 @@ pipeline {
                     // Add SSH server key to known hosts to avoid interactive prompt
                     sh "ssh-keyscan -H ${ANSIBLE_SERVER} >> ~/.ssh/known_hosts"
                     // Define artifact path based on workspace and build output
+                    // def artifactPath = "${env.WORKSPACE}${ARTIFACT_PATH}"
+                    // sh """
+                    //     sshpass -p  '${SSH_PASS}' scp -o StrictHostKeyChecking=no ${artifactPath} ${ANSIBLE_USER}@${ANSIBLE_SERVER}:${DEPLOY_PATH}/
+                    // """
                     def artifactPath = "${env.WORKSPACE}${ARTIFACT_PATH}"
+                    def ansibleDockerImageFilePath = "${env.WORKSPACE}${CICD_PATH}igp_ansible.yml"
+                    def ansibleDockerContainerCreateFilePath = "${env.WORKSPACE}/${CICD_PATH}igp_ansible_deploy.yml"                  
                     sh """
+                        echo ${ansibleDockerImageFilePath}
+                        echo 'copying igp_ansible.yml to create docker image'
+                        sshpass -p '${SSH_PASS}' scp -o StrictHostKeyChecking=no ${ansibleDockerImageFilePath} ${ANSIBLE_USER}@${ANSIBLE_SERVER}:${DEPLOY_PATH}/
+                        
+                        echo 'copying igp_ansible.yml to create docker image'
+                        sshpass -p '${SSH_PASS}' scp -o StrictHostKeyChecking=no ${ansibleDockerContainerCreateFilePath} ${ANSIBLE_USER}@${ANSIBLE_SERVER}:${DEPLOY_PATH}/
+                        
+                        echo 'copying war file'
                         sshpass -p  '${SSH_PASS}' scp -o StrictHostKeyChecking=no ${artifactPath} ${ANSIBLE_USER}@${ANSIBLE_SERVER}:${DEPLOY_PATH}/
                     """
                 }
