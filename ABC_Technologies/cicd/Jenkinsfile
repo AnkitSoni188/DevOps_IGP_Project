@@ -89,6 +89,7 @@ pipeline {
                     }
                 }
             }
+        }
         stage('Deploy Artifacts to Kubernetes') {
             steps {
                 script {
@@ -105,7 +106,7 @@ pipeline {
                 }
             }
         }
-        }
+    }
     }
      post {
           always {
