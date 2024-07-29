@@ -52,7 +52,8 @@ pipeline {
                         sshpass -p  '${SSH_PASS}' scp -o StrictHostKeyChecking=no "${env.WORKSPACE}/ABC_Technologies/cicd/igp_ansible_deploy.yml" ${ANSIBLE_USER}@${ANSIBLE_SERVER}:${DEPLOY_PATH}/
                         sshpass -p  '${SSH_PASS}' scp -o StrictHostKeyChecking=no "${env.WORKSPACE}/ABC_Technologies/cicd/kube_deply.yml" ${ANSIBLE_USER}@${ANSIBLE_SERVER}:${DEPLOY_PATH}/
                         sshpass -p  '${SSH_PASS}' scp -o StrictHostKeyChecking=no "${env.WORKSPACE}/ABC_Technologies/cicd/kube_service.yml" ${ANSIBLE_USER}@${ANSIBLE_SERVER}:${DEPLOY_PATH}/
-                        sshpass -p  '${SSH_PASS}' scp -o StrictHostKeyChecking=no ${artifactPath} ${ANSIBLE_USER}@${ANSIBLE_SERVER}:${DEPLOY_PATH}/                   
+                        sshpass -p  '${SSH_PASS}' scp -o StrictHostKeyChecking=no ${artifactPath} ${ANSIBLE_USER}@${ANSIBLE_SERVER}:${DEPLOY_PATH}/
+                    
                     """
                 }
             }
@@ -106,7 +107,6 @@ pipeline {
                 }
             }
         }
-    }
     }
      post {
           always {
