@@ -1,0 +1,11 @@
+---
+- hosts: kubernetes
+#  become: true
+  user: root
+
+  tasks:
+  - name: deploy igpproject app on kubernetes
+    command: kubectl apply -f igpproject-deployment.yml
+
+  - name: create service for igpproject
+    command: kubectl apply -f igpproject-service.yml

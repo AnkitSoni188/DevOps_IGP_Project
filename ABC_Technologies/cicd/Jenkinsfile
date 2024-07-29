@@ -50,8 +50,9 @@ pipeline {
                     sh """
                         sshpass -p  '${SSH_PASS}' scp -o StrictHostKeyChecking=no "${env.WORKSPACE}/ABC_Technologies/cicd/igp_ansible.yml" ${ANSIBLE_USER}@${ANSIBLE_SERVER}:${DEPLOY_PATH}/
                         sshpass -p  '${SSH_PASS}' scp -o StrictHostKeyChecking=no "${env.WORKSPACE}/ABC_Technologies/cicd/igp_ansible_deploy.yml" ${ANSIBLE_USER}@${ANSIBLE_SERVER}:${DEPLOY_PATH}/
-                        sshpass -p  '${SSH_PASS}' scp -o StrictHostKeyChecking=no ${artifactPath} ${ANSIBLE_USER}@${ANSIBLE_SERVER}:${DEPLOY_PATH}/
-                    
+                        sshpass -p  '${SSH_PASS}' scp -o StrictHostKeyChecking=no "${env.WORKSPACE}/ABC_Technologies/cicd/kube_deply.yml" ${ANSIBLE_USER}@${ANSIBLE_SERVER}:${DEPLOY_PATH}/
+                        sshpass -p  '${SSH_PASS}' scp -o StrictHostKeyChecking=no "${env.WORKSPACE}/ABC_Technologies/cicd/kube_service.yml" ${ANSIBLE_USER}@${ANSIBLE_SERVER}:${DEPLOY_PATH}/
+                        sshpass -p  '${SSH_PASS}' scp -o StrictHostKeyChecking=no ${artifactPath} ${ANSIBLE_USER}@${ANSIBLE_SERVER}:${DEPLOY_PATH}/                   
                     """
                 }
             }
@@ -88,6 +89,22 @@ pipeline {
                     }
                 }
             }
+        stage('Deploy Artifacts to Kubernetes') {
+            steps {
+                script {
+                    echo 'Running Ansible kubernets playbooks on the remote server...'
+
+                    withCredentials([sshUserPrivateKey(credentialsId: "${SSH_CREDENTIALS_ID}", keyFileVariable: 'SSH_KEY')]) {
+                    sh '''
+                    echo "Listing /opt/docker/";
+                    ssh -o StrictHostKeyChecking=no -i $SSH_KEY $ANSIBLE_USER@$ANSIBLE_SERVER "ls -l /opt/docker/"
+                    echo "Running  Kubernetes Deploy Playbook";
+                    ssh -o StrictHostKeyChecking=no -i $SSH_KEY $ANSIBLE_USER@$ANSIBLE_SERVER "ansible-playbook -i /opt/docker/hosts  /opt/docker/kube_deply.yml"
+                    '''
+                    }
+                }
+            }
+        }
         }
     }
      post {
